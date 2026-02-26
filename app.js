@@ -1,347 +1,305 @@
 document.addEventListener('DOMContentLoaded', function () {
-  // DOM Elements
-  const incomeForm = document.getElementById('income-form');
-  const transactionForm = document.getElementById('transaction-form');
-  const transactionsList = document.getElementById('transactions-list');
-  const monthlyIncomeDisplay = document.getElementById('monthly-income');
-  const currentBalanceDisplay = document.getElementById('current-balance');
-  const totalExpensesDisplay = document.getElementById('total-expenses');
-  const remainingBudgetDisplay = document.getElementById('remaining-budget');
-  const dailyAverageDisplay = document.getElementById('daily-average');
+  if (window.lucide) lucide.createIcons();
 
-  // Chart
+  // =============================
+  // STATE
+  // =============================
+  let monthlyIncome = parseFloat(localStorage.getItem('monthlyIncome')) || 0;
+  let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
   let categoryChart = null;
 
-  // Initialize app
-  initApp();
-
-  // Event Listeners
-  incomeForm.addEventListener('submit', handleSetIncome);
-  transactionForm.addEventListener('submit', handleAddTransaction);
-
-  // Initialize the app
-  function initApp() {
-    // Set today's date as default in the form
-    document.getElementById('transaction-date').valueAsDate = new Date();
-
-    // Load data from localStorage
-    loadData();
-
-    // Update UI
-    updateUI();
+  // =============================
+  // HELPERS
+  // =============================
+  function formatCurrency(amount) {
+    return 'R' + Math.abs(amount).toFixed(2);
   }
 
-  // Handle setting monthly income
-  function handleSetIncome(e) {
-    e.preventDefault();
-
-    const incomeAmount = parseFloat(
-      document.getElementById('income-amount').value
-    );
-
-    if (isNaN(incomeAmount) || incomeAmount <= 0) {
-      alert('Please enter a valid income amount');
-      return;
-    }
-
-    // Save to localStorage
-    localStorage.setItem('monthlyIncome', incomeAmount.toString());
-
-    // Update UI
-    updateUI();
-
-    // Reset form
-    incomeForm.reset();
+  function todayString() {
+    return new Date().toISOString().split('T')[0];
   }
 
-  // Handle adding a new transaction
-  function handleAddTransaction(e) {
-    e.preventDefault();
-
-    const type = document.getElementById('transaction-type').value;
-    const amount = parseFloat(
-      document.getElementById('transaction-amount').value
-    );
-    const description = document
-      .getElementById('transaction-description')
-      .value.trim();
-    const category = document.getElementById('transaction-category').value;
-    const date = document.getElementById('transaction-date').value;
-
-    if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid amount');
-      return;
-    }
-
-    if (!description) {
-      alert('Please enter a description');
-      return;
-    }
-
-    if (!date) {
-      alert('Please select a date');
-      return;
-    }
-
-    // Create transaction object
-    const transaction = {
-      id: Date.now(),
-      type,
-      amount: type === 'expense' ? -amount : amount,
-      description,
-      category,
-      date,
-    };
-
-    // Get existing transactions
-    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-
-    // Add new transaction
-    transactions.push(transaction);
-
-    // Save to localStorage
+  function saveToStorage() {
     localStorage.setItem('transactions', JSON.stringify(transactions));
-
-    // Update UI
-    updateUI();
-
-    // Reset form
-    transactionForm.reset();
-    document.getElementById('transaction-date').valueAsDate = new Date();
+    localStorage.setItem('monthlyIncome', monthlyIncome.toString());
   }
 
-  // Load data from localStorage
-  function loadData() {
-    // Check if monthly income is set
-    const income = parseFloat(localStorage.getItem('monthlyIncome')) || 0;
-    if (income > 0) {
-      document.getElementById('income-amount').value = income;
-    }
-  }
-
-  // Update the UI with current data
-  function updateUI() {
-    const monthlyIncome =
-      parseFloat(localStorage.getItem('monthlyIncome')) || 0;
-    const transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-
-    // Calculate totals
+  function calculateStats() {
     const totalExpenses = Math.abs(
       transactions
         .filter((t) => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0)
+        .reduce((sum, t) => sum + t.amount, 0),
     );
 
-    const totalAdditionalIncome = transactions
+    const totalIncomeExtra = transactions
       .filter((t) => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const currentBalance =
-      monthlyIncome + totalAdditionalIncome - totalExpenses;
+    const balance = monthlyIncome + totalIncomeExtra - totalExpenses;
 
-    // Update displays
-    monthlyIncomeDisplay.textContent = formatCurrency(monthlyIncome);
-    totalExpensesDisplay.textContent = formatCurrency(totalExpenses);
-    currentBalanceDisplay.textContent = formatCurrency(currentBalance);
+    const today = todayString();
 
-    // Calculate remaining budget and daily average
-    const today = new Date();
-    const currentDay = today.getDate();
-    const daysInMonth = new Date(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      0
-    ).getDate();
-    const daysRemaining = daysInMonth - currentDay + 1;
+    const todayIncome = transactions
+      .filter((t) => t.type === 'income' && t.date === today)
+      .reduce((sum, t) => sum + t.amount, 0);
 
-    const remainingBudget = currentBalance;
-    const dailyAverage = remainingBudget / daysRemaining;
+    const todayExpenses = Math.abs(
+      transactions
+        .filter((t) => t.type === 'expense' && t.date === today)
+        .reduce((sum, t) => sum + t.amount, 0),
+    );
 
-    remainingBudgetDisplay.textContent = formatCurrency(remainingBudget);
-    dailyAverageDisplay.textContent = formatCurrency(dailyAverage);
+    const percentage =
+      monthlyIncome > 0
+        ? Math.min((totalExpenses / monthlyIncome) * 100, 100)
+        : 0;
 
-    // Update transactions list
-    renderTransactions(transactions);
-
-    // Update chart
-    updateChart(transactions);
+    return {
+      totalExpenses,
+      balance,
+      todayIncome,
+      todayExpenses,
+      percentage,
+    };
   }
 
-  // Render transactions list
-  function renderTransactions(transactions) {
-    // Clear existing transactions
-    transactionsList.innerHTML = '';
+  // =============================
+  // UPDATE UI
+  // =============================
+  function updateUI() {
+    const stats = calculateStats();
 
-    // Sort by date (newest first)
-    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    document.getElementById('mobile-monthly-income').textContent =
+      formatCurrency(monthlyIncome);
+
+    document.getElementById('mobile-total-expenses').textContent =
+      formatCurrency(stats.totalExpenses);
+
+    document.getElementById('mobile-current-balance').textContent =
+      formatCurrency(stats.balance);
+
+    document.getElementById('mobile-spent-amount').textContent = formatCurrency(
+      stats.totalExpenses,
+    );
+
+    document.getElementById('mobile-left-amount').textContent = formatCurrency(
+      stats.balance,
+    );
+
+    document.getElementById('budget-percentage').textContent =
+      stats.percentage.toFixed(0) + '%';
+
+    document.getElementById('mobile-budget-progress').style.width =
+      stats.percentage + '%';
+
+    document.getElementById('today-income').textContent = formatCurrency(
+      stats.todayIncome,
+    );
+
+    document.getElementById('today-expenses').textContent = formatCurrency(
+      stats.todayExpenses,
+    );
+
+    updateTransactionsList();
+    updateCategoryChart();
+
+    saveToStorage();
+  }
+
+  // =============================
+  // TRANSACTIONS LIST
+  // =============================
+  function updateTransactionsList() {
+    const list = document.getElementById('mobile-transactions-list');
+    list.innerHTML = '';
 
     if (transactions.length === 0) {
-      transactionsList.innerHTML =
-        '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No transactions yet</td></tr>';
+      list.innerHTML =
+        "<div class='text-center text-slate-400 text-sm py-6'>No transactions yet</div>";
       return;
     }
 
-    // Add each transaction to the table
-    transactions.forEach((transaction) => {
-      const row = document.createElement('tr');
-      row.className = 'hover:bg-gray-50';
-      row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(
-                  transaction.date
-                )}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${
-                  transaction.description
-                }</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${getCategoryColor(transaction.category)}">
-                        ${transaction.category}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm 
-                    ${
-                      transaction.type === 'expense'
-                        ? 'text-red-600'
-                        : 'text-green-600'
-                    }">
-                    ${
-                      transaction.type === 'expense' ? '-' : '+'
-                    }${formatCurrency(Math.abs(transaction.amount))}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button data-id="${
-                      transaction.id
-                    }" class="text-indigo-600 hover:text-indigo-900 delete-btn">Delete</button>
-                </td>
-            `;
-      transactionsList.appendChild(row);
-    });
+    const sorted = [...transactions].sort(
+      (a, b) => new Date(b.date) - new Date(a.date),
+    );
 
-    // Add event listeners to delete buttons
-    document.querySelectorAll('.delete-btn').forEach((button) => {
-      button.addEventListener('click', handleDeleteTransaction);
+    sorted.slice(0, 10).forEach((t) => {
+      const div = document.createElement('div');
+      div.className =
+        'bg-white rounded-xl p-4 flex justify-between items-center shadow-sm border border-slate-100';
+
+      div.innerHTML = `
+        <div>
+          <p class="font-medium text-sm">${t.description}</p>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="category-pill ${t.category}">
+              ${t.category}
+            </span>
+            <span class="text-xs text-slate-400">${t.date}</span>
+          </div>
+        </div>
+        <p class="font-semibold text-sm ${
+          t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+        }">
+          ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)}
+        </p>
+      `;
+
+      list.appendChild(div);
     });
   }
 
-  // Handle deleting a transaction
-  function handleDeleteTransaction(e) {
-    const id = parseInt(e.target.getAttribute('data-id'));
+  // =============================
+  // CATEGORY CHART
+  // =============================
+  function updateCategoryChart() {
+    const ctx = document.getElementById('mobileCategoryChart');
+    if (!ctx) return;
 
-    // Get existing transactions
-    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+    const expenseTransactions = transactions.filter(
+      (t) => t.type === 'expense',
+    );
 
-    // Filter out the transaction to delete
-    transactions = transactions.filter((t) => t.id !== id);
+    const grouped = {};
 
-    // Save to localStorage
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-
-    // Update UI
-    updateUI();
-  }
-
-  // Update the category chart
-  function updateChart(transactions) {
-    const ctx = document.getElementById('categoryChart').getContext('2d');
-
-    // Group expenses by category
-    const expensesByCategory = {};
-
-    transactions
-      .filter((t) => t.type === 'expense')
-      .forEach((t) => {
-        if (!expensesByCategory[t.category]) {
-          expensesByCategory[t.category] = 0;
-        }
-        expensesByCategory[t.category] += Math.abs(t.amount);
-      });
-
-    const categories = Object.keys(expensesByCategory);
-    const amounts = Object.values(expensesByCategory);
-
-    // Colors for categories
-    const backgroundColors = categories.map((cat) => {
-      switch (cat) {
-        case 'shopping':
-          return 'rgba(255, 99, 132, 0.7)';
-        case 'food':
-          return 'rgba(54, 162, 235, 0.7)';
-        case 'transport':
-          return 'rgba(255, 206, 86, 0.7)';
-        case 'bills':
-          return 'rgba(75, 192, 192, 0.7)';
-        case 'entertainment':
-          return 'rgba(153, 102, 255, 0.7)';
-        default:
-          return 'rgba(201, 203, 207, 0.7)';
-      }
+    expenseTransactions.forEach((t) => {
+      const amount = Math.abs(t.amount);
+      grouped[t.category] = (grouped[t.category] || 0) + amount;
     });
 
-    // Destroy previous chart if it exists
+    const labels = Object.keys(grouped);
+    const data = Object.values(grouped);
+
     if (categoryChart) {
       categoryChart.destroy();
     }
 
-    // Create new chart
     categoryChart = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: categories,
+        labels: labels,
         datasets: [
           {
-            data: amounts,
-            backgroundColor: backgroundColors,
-            borderWidth: 1,
+            data: data,
+            backgroundColor: [
+              '#6366f1',
+              '#ef4444',
+              '#22c55e',
+              '#f59e0b',
+              '#a855f7',
+              '#0ea5e9',
+            ],
           },
         ],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
         plugins: {
-          legend: {
-            position: 'bottom',
-          },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return `${context.label}: ${formatCurrency(context.raw)}`;
-              },
-            },
-          },
+          legend: { display: false },
         },
+        maintainAspectRatio: false,
       },
     });
   }
 
-  // Helper function to format currency (ZAR)
-  function formatCurrency(amount) {
-    return 'R' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-  }
+  // =============================
+  // FORMS
+  // =============================
+  document
+    .getElementById('mobile-income-form')
+    .addEventListener('submit', function (e) {
+      e.preventDefault();
 
-  // Helper function to format date
-  function formatDate(dateString) {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  }
+      const amount =
+        parseFloat(document.getElementById('mobile-income-amount').value) || 0;
 
-  // Helper function to get category color
-  function getCategoryColor(category) {
-    switch (category) {
-      case 'shopping':
-        return 'bg-red-100 text-red-800';
-      case 'food':
-        return 'bg-blue-100 text-blue-800';
-      case 'transport':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'bills':
-        return 'bg-green-100 text-green-800';
-      case 'entertainment':
-        return 'bg-purple-100 text-purple-800';
-      case 'freelance':
-        return 'bg-indigo-100 text-indigo-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      monthlyIncome = amount;
+      closeIncomeSheet();
+      updateUI();
+    });
+
+  document
+    .getElementById('mobile-transaction-form')
+    .addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const type = document.getElementById('transaction-type').value;
+
+      const amount =
+        parseFloat(
+          document.getElementById('mobile-transaction-amount').value,
+        ) || 0;
+
+      const description = document.getElementById(
+        'mobile-transaction-description',
+      ).value;
+
+      const category = document.getElementById(
+        'mobile-transaction-category',
+      ).value;
+
+      const date = document.getElementById('mobile-transaction-date').value;
+
+      if (!amount || !description || !date) return;
+
+      transactions.push({
+        id: Date.now(),
+        type,
+        amount: type === 'expense' ? -amount : amount,
+        description,
+        category,
+        date,
+      });
+
+      this.reset();
+      document.getElementById('mobile-transaction-date').value = todayString();
+
+      closeAddSheet();
+      updateUI();
+    });
+
+  // =============================
+  // BOTTOM SHEETS
+  // =============================
+  window.openIncomeSheet = function () {
+    document.getElementById('income-sheet').classList.add('open');
+  };
+
+  window.closeIncomeSheet = function () {
+    document.getElementById('income-sheet').classList.remove('open');
+  };
+
+  window.openAddSheet = function () {
+    document.getElementById('add-sheet').classList.add('open');
+  };
+
+  window.closeAddSheet = function () {
+    document.getElementById('add-sheet').classList.remove('open');
+  };
+
+  // =============================
+  // TOGGLE TRANSACTION TYPE
+  // =============================
+  window.setTransactionType = function (type) {
+    document.getElementById('transaction-type').value = type;
+
+    const expenseBtn = document.getElementById('expense-toggle');
+    const incomeBtn = document.getElementById('income-toggle');
+
+    expenseBtn.classList.remove('bg-white', 'shadow-sm');
+    incomeBtn.classList.remove('bg-white', 'shadow-sm');
+
+    if (type === 'expense') {
+      expenseBtn.classList.add('bg-white', 'shadow-sm');
+    } else {
+      incomeBtn.classList.add('bg-white', 'shadow-sm');
     }
-  }
+  };
+
+  // =============================
+  // INIT
+  // =============================
+  document.getElementById('mobile-transaction-date').value = todayString();
+
+  updateUI();
 });
