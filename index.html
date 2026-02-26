@@ -6,6 +6,13 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>My Money • Personal Finance</title>
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="My Money" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icon-192x192.png" />
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -74,6 +81,11 @@
         z-index: 40;
         border: none;
         cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .fab:active {
+        transform: scale(0.95);
       }
 
       .mobile-nav {
@@ -89,6 +101,24 @@
         padding-bottom: env(safe-area-inset-bottom, 8px);
         border-top: 1px solid rgba(0, 0, 0, 0.05);
         z-index: 30;
+      }
+
+      .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px;
+        border-radius: 12px;
+        color: #64748b;
+        font-size: 12px;
+        transition: all 0.2s;
+        cursor: pointer;
+        flex: 1;
+      }
+
+      .nav-item.active {
+        color: #6366f1;
+        background: #eef2ff;
       }
 
       .main-content {
@@ -138,9 +168,150 @@
         background: #f1f5f9;
         color: #334155;
       }
+
+      /* Loader */
+      .loader {
+        width: 48px;
+        height: 48px;
+        border: 5px solid #f3f3f3;
+        border-bottom-color: #6366f1;
+        border-radius: 50%;
+        display: inline-block;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+      }
+
+      .loader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        backdrop-filter: blur(5px);
+      }
+
+      .loader-overlay.active {
+        display: flex;
+      }
+
+      .skeleton {
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 8px;
+      }
+
+      @keyframes loading {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      @keyframes rotation {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Snackbar */
+      .snackbar {
+        position: fixed;
+        bottom: 24px;
+        left: 16px;
+        right: 16px;
+        background: #1e293b;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transform: translateY(100px);
+        transition: transform 0.3s ease;
+        z-index: 60;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .snackbar.show {
+        transform: translateY(0);
+      }
+
+      .snackbar.success {
+        background: #059669;
+      }
+
+      .snackbar.error {
+        background: #dc2626;
+      }
+
+      .snackbar.info {
+        background: #2563eb;
+      }
+
+      .snackbar-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 4px 8px;
+      }
+
+      /* Stats Page */
+      #stats-page {
+        display: none;
+      }
+
+      #transactions-page {
+        display: none;
+      }
+
+      #home-page {
+        display: block;
+      }
+
+      /* Pull to refresh */
+      .ptr-element {
+        text-align: center;
+        padding: 10px;
+        color: #6366f1;
+        font-size: 14px;
+        display: none;
+      }
+
+      .ptr-element.visible {
+        display: block;
+      }
     </style>
   </head>
   <body>
+    <!-- Loader Overlay -->
+    <div class="loader-overlay" id="loader-overlay">
+      <span class="loader"></span>
+    </div>
+
+    <!-- Snackbar -->
+    <div class="snackbar" id="snackbar">
+      <span id="snackbar-message"></span>
+      <button class="snackbar-close" onclick="hideSnackbar()">&times;</button>
+    </div>
+
     <!-- Mobile App Header -->
     <div
       class="mobile-only app-header px-4 py-3 flex items-center justify-between sticky top-0 z-20"
@@ -151,147 +322,244 @@
           <span class="text-white font-bold text-sm">R</span>
         </div>
         <div>
-          <h1 class="text-lg font-bold text-slate-900">My Money</h1>
+          <h1 class="text-lg font-bold text-slate-900" id="app-title">
+            My Money
+          </h1>
           <p class="text-xs text-slate-500">Track every rand</p>
         </div>
       </div>
+      <button onclick="refreshData()" class="p-2">
+        <i data-lucide="refresh-cw" class="w-5 h-5 text-slate-600"></i>
+      </button>
+    </div>
+
+    <!-- Pull to refresh indicator -->
+    <div class="ptr-element mobile-only" id="ptr-element">
+      <i data-lucide="arrow-down" class="w-5 h-5"></i> Pull to refresh
     </div>
 
     <!-- Main Mobile Content -->
-    <div class="mobile-only main-content px-4">
-      <!-- Income Card -->
-      <div
-        class="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-2xl p-5 shadow-lg mb-3">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-indigo-100 text-sm">Monthly Income</span>
-          <div class="bg-white/20 rounded-full p-1.5">
-            <i data-lucide="trending-up" class="w-4 h-4 text-white"></i>
-          </div>
-        </div>
-        <p class="text-3xl font-bold text-white" id="mobile-monthly-income">
-          R0.00
-        </p>
-        <p class="text-xs text-indigo-200 mt-1">Your monthly budget</p>
-      </div>
-
-      <!-- Balance & Expenses -->
-      <div class="grid grid-cols-2 gap-3 mb-4">
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="bg-emerald-100 rounded-full p-1.5">
-              <i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i>
+    <div class="mobile-only main-content">
+      <!-- Home Page -->
+      <div id="home-page" class="px-4">
+        <!-- Income Card -->
+        <div
+          class="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-2xl p-5 shadow-lg mb-3">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-indigo-100 text-sm">Monthly Income</span>
+            <div class="bg-white/20 rounded-full p-1.5">
+              <i data-lucide="trending-up" class="w-4 h-4 text-white"></i>
             </div>
-            <span class="text-xs text-slate-500">Balance</span>
           </div>
-          <p
-            class="text-xl font-bold text-slate-900"
-            id="mobile-current-balance">
+          <p class="text-3xl font-bold text-white" id="mobile-monthly-income">
             R0.00
           </p>
-          <p class="text-xs text-slate-400 mt-1">Total money</p>
+          <p class="text-xs text-indigo-200 mt-1">Your monthly budget</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="bg-rose-100 rounded-full p-1.5">
-              <i data-lucide="credit-card" class="w-4 h-4 text-rose-600"></i>
-            </div>
-            <span class="text-xs text-slate-500">Expenses</span>
-          </div>
-          <p
-            class="text-xl font-bold text-slate-900"
-            id="mobile-total-expenses">
-            R0.00
-          </p>
-          <p class="text-xs text-slate-400 mt-1">This month</p>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="flex gap-2 mb-6">
-        <button
-          onclick="openIncomeSheet()"
-          class="flex-1 bg-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 border border-slate-200 shadow-sm active:bg-slate-50">
-          <i data-lucide="piggy-bank" class="w-5 h-5 text-indigo-500"></i>
-          <span class="text-sm font-medium">Set Income</span>
-        </button>
-        <button
-          onclick="openAddSheet()"
-          class="flex-1 bg-indigo-600 rounded-xl py-3 px-4 flex items-center justify-center gap-2 text-white shadow-lg shadow-indigo-200 active:bg-indigo-700">
-          <i data-lucide="plus" class="w-5 h-5"></i>
-          <span class="text-sm font-medium">Add</span>
-        </button>
-      </div>
-
-      <!-- Budget Progress -->
-      <div
-        class="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-slate-100">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-2">
-            <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-500"></i>
-            <span class="font-medium">Budget Progress</span>
-          </div>
-          <span class="text-sm text-slate-500" id="budget-percentage">0%</span>
-        </div>
-        <div class="h-3 bg-slate-100 rounded-full overflow-hidden mb-3">
+        <!-- Balance & Expenses -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
           <div
-            class="h-full bg-indigo-600 rounded-full transition-all duration-300"
-            id="mobile-budget-progress"
-            style="width: 0%"></div>
-        </div>
-        <div class="flex justify-between text-sm">
-          <span class="text-slate-600"
-            >Spent:
-            <span class="font-semibold" id="mobile-spent-amount"
-              >R0.00</span
-            ></span
-          >
-          <span class="text-slate-600"
-            >Left:
-            <span class="font-semibold text-indigo-600" id="mobile-left-amount"
-              >R0.00</span
-            ></span
-          >
-        </div>
-      </div>
-
-      <!-- Today's Summary -->
-      <div
-        class="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-slate-100">
-        <h3 class="font-medium mb-4 flex items-center gap-2">
-          <i data-lucide="calendar" class="w-5 h-5 text-indigo-500"></i>
-          Today's Activity
-        </h3>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <p class="text-xs text-slate-500 mb-1">Income Today</p>
-            <p class="text-lg font-bold text-emerald-600" id="today-income">
+            class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="bg-emerald-100 rounded-full p-1.5">
+                <i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i>
+              </div>
+              <span class="text-xs text-slate-500">Balance</span>
+            </div>
+            <p
+              class="text-xl font-bold text-slate-900"
+              id="mobile-current-balance">
               R0.00
             </p>
+            <p class="text-xs text-slate-400 mt-1">Total money</p>
           </div>
-          <div>
-            <p class="text-xs text-slate-500 mb-1">Spent Today</p>
-            <p class="text-lg font-bold text-rose-600" id="today-expenses">
+
+          <div
+            class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="bg-rose-100 rounded-full p-1.5">
+                <i data-lucide="credit-card" class="w-4 h-4 text-rose-600"></i>
+              </div>
+              <span class="text-xs text-slate-500">Expenses</span>
+            </div>
+            <p
+              class="text-xl font-bold text-slate-900"
+              id="mobile-total-expenses">
               R0.00
             </p>
+            <p class="text-xs text-slate-400 mt-1">This month</p>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="flex gap-2 mb-6">
+          <button
+            onclick="openIncomeSheet()"
+            class="flex-1 bg-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 border border-slate-200 shadow-sm active:bg-slate-50">
+            <i data-lucide="piggy-bank" class="w-5 h-5 text-indigo-500"></i>
+            <span class="text-sm font-medium">Set Income</span>
+          </button>
+          <button
+            onclick="openAddSheet()"
+            class="flex-1 bg-indigo-600 rounded-xl py-3 px-4 flex items-center justify-center gap-2 text-white shadow-lg shadow-indigo-200 active:bg-indigo-700">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+            <span class="text-sm font-medium">Add</span>
+          </button>
+        </div>
+
+        <!-- Budget Progress -->
+        <div
+          class="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-slate-100">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-500"></i>
+              <span class="font-medium">Budget Progress</span>
+            </div>
+            <span class="text-sm text-slate-500" id="budget-percentage"
+              >0%</span
+            >
+          </div>
+          <div class="h-3 bg-slate-100 rounded-full overflow-hidden mb-3">
+            <div
+              class="h-full bg-indigo-600 rounded-full transition-all duration-300"
+              id="mobile-budget-progress"
+              style="width: 0%"></div>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-600"
+              >Spent:
+              <span class="font-semibold" id="mobile-spent-amount"
+                >R0.00</span
+              ></span
+            >
+            <span class="text-slate-600"
+              >Left:
+              <span
+                class="font-semibold text-indigo-600"
+                id="mobile-left-amount"
+                >R0.00</span
+              ></span
+            >
+          </div>
+        </div>
+
+        <!-- Today's Summary -->
+        <div
+          class="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-slate-100">
+          <h3 class="font-medium mb-4 flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-indigo-500"></i>
+            Today's Activity
+          </h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs text-slate-500 mb-1">Income Today</p>
+              <p class="text-lg font-bold text-emerald-600" id="today-income">
+                R0.00
+              </p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 mb-1">Spent Today</p>
+              <p class="text-lg font-bold text-rose-600" id="today-expenses">
+                R0.00
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini Chart -->
+        <div
+          class="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-slate-100">
+          <h3 class="font-medium mb-4">Spending by Category</h3>
+          <div class="h-48">
+            <canvas id="mobileCategoryChart"></canvas>
+          </div>
+          <div class="mt-4 space-y-2" id="category-breakdown"></div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="mb-6">
+          <h3 class="font-medium mb-3 px-1">Recent Transactions</h3>
+          <div class="space-y-2" id="mobile-transactions-list"></div>
+        </div>
+      </div>
+
+      <!-- Stats Page -->
+      <div id="stats-page" class="px-4">
+        <div
+          class="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-slate-100">
+          <h3 class="font-medium mb-4">Monthly Overview</h3>
+          <div class="h-64">
+            <canvas id="monthlyChart"></canvas>
+          </div>
+        </div>
+
+        <div
+          class="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-slate-100">
+          <h3 class="font-medium mb-4">Top Categories</h3>
+          <div id="top-categories-list" class="space-y-3"></div>
+        </div>
+
+        <div
+          class="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-slate-100">
+          <h3 class="font-medium mb-4">Summary</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-slate-600">Average Daily Expense</span>
+              <span class="font-semibold" id="avg-daily-expense">R0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-600">Highest Expense</span>
+              <span class="font-semibold" id="highest-expense">R0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-600">Total Transactions</span>
+              <span class="font-semibold" id="total-transactions">0</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Mini Chart -->
-      <div
-        class="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-slate-100">
-        <h3 class="font-medium mb-4">Spending by Category</h3>
-        <div class="h-48">
-          <canvas id="mobileCategoryChart"></canvas>
+      <!-- Transactions Page -->
+      <div id="transactions-page" class="px-4">
+        <div class="mb-4 flex gap-2">
+          <input
+            type="text"
+            id="search-transactions"
+            placeholder="Search transactions..."
+            class="flex-1 px-4 py-3 rounded-xl border border-slate-200"
+            oninput="filterTransactions()" />
+          <select
+            id="filter-category"
+            class="px-4 py-3 rounded-xl border border-slate-200"
+            onchange="filterTransactions()">
+            <option value="all">All</option>
+            <option value="shopping">Shopping</option>
+            <option value="food">Food</option>
+            <option value="transport">Transport</option>
+            <option value="bills">Bills</option>
+            <option value="entertainment">Entertainment</option>
+            <option value="freelance">Freelance</option>
+            <option value="other">Other</option>
+          </select>
         </div>
-        <div class="mt-4 space-y-2" id="category-breakdown"></div>
-      </div>
 
-      <!-- Recent Transactions -->
-      <div class="mb-6">
-        <h3 class="font-medium mb-3 px-1">Recent Transactions</h3>
-        <div class="space-y-2" id="mobile-transactions-list"></div>
+        <div class="mb-4 flex gap-2">
+          <button
+            onclick="exportData()"
+            class="flex-1 bg-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 border border-slate-200">
+            <i data-lucide="download" class="w-5 h-5"></i>
+            Export
+          </button>
+          <button
+            onclick="importData()"
+            class="flex-1 bg-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 border border-slate-200">
+            <i data-lucide="upload" class="w-5 h-5"></i>
+            Import
+          </button>
+        </div>
+
+        <div class="space-y-2" id="all-transactions-list"></div>
       </div>
     </div>
 
@@ -316,7 +584,7 @@
                 id="mobile-income-amount"
                 class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                 placeholder="0.00"
-                value="20903.73" />
+                value="0" />
             </div>
           </div>
           <button
@@ -420,6 +688,106 @@
       </div>
     </div>
 
+    <!-- Edit Transaction Sheet -->
+    <div class="mobile-bottom-sheet" id="edit-sheet">
+      <div class="sheet-handle"></div>
+      <div class="px-6 pb-8">
+        <h2 class="text-xl font-semibold mb-6">Edit Transaction</h2>
+        <form id="edit-transaction-form" class="space-y-4">
+          <input type="hidden" id="edit-transaction-id" />
+
+          <div class="bg-slate-100 p-1 rounded-xl flex mb-4">
+            <button
+              type="button"
+              class="flex-1 py-3 rounded-xl text-sm font-medium bg-white shadow-sm"
+              id="edit-expense-toggle"
+              onclick="setEditTransactionType('expense')">
+              💳 Expense
+            </button>
+            <button
+              type="button"
+              class="flex-1 py-3 rounded-xl text-sm font-medium"
+              id="edit-income-toggle"
+              onclick="setEditTransactionType('income')">
+              💰 Income
+            </button>
+          </div>
+          <input type="hidden" id="edit-transaction-type" value="expense" />
+
+          <div>
+            <label class="text-sm font-medium text-slate-700 block mb-2"
+              >Amount</label
+            >
+            <div class="relative">
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                >R</span
+              >
+              <input
+                type="number"
+                step="0.01"
+                id="edit-transaction-amount"
+                class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200"
+                required />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-sm font-medium text-slate-700 block mb-2"
+              >Description</label
+            >
+            <input
+              type="text"
+              id="edit-transaction-description"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200"
+              required />
+          </div>
+
+          <div>
+            <label class="text-sm font-medium text-slate-700 block mb-2"
+              >Category</label
+            >
+            <select
+              id="edit-transaction-category"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200">
+              <option value="shopping">🛍️ Shopping</option>
+              <option value="food">🍔 Food & Dining</option>
+              <option value="transport">🚗 Transport</option>
+              <option value="bills">📄 Bills & Utilities</option>
+              <option value="entertainment">🎬 Entertainment</option>
+              <option value="freelance">💼 Freelance Income</option>
+              <option value="other">📌 Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-sm font-medium text-slate-700 block mb-2"
+              >Date</label
+            >
+            <input
+              type="date"
+              id="edit-transaction-date"
+              class="w-full px-4 py-3 rounded-xl border border-slate-200"
+              required />
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              type="submit"
+              class="flex-1 bg-indigo-600 text-white font-medium py-3 px-4 rounded-xl active:bg-indigo-700">
+              Update
+            </button>
+            <button
+              type="button"
+              onclick="deleteTransaction()"
+              class="flex-1 bg-rose-600 text-white font-medium py-3 px-4 rounded-xl active:bg-rose-700">
+              Delete
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- FAB -->
     <button class="fab mobile-only" onclick="openAddSheet()">
       <i data-lucide="plus" class="w-6 h-6"></i>
@@ -441,6 +809,6 @@
       </div>
     </div>
 
-    <script src="./app.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>
