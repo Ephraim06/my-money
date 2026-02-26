@@ -6,16 +6,9 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>My Money • Personal Finance</title>
-
-    <!-- PWA Manifest -->
-    <link
-      rel="manifest"
-      href="data:application/manifest+json,%7B%22name%22%3A%22My%20Money%22%2C%22short_name%22%3A%22MyMoney%22%2C%22start_url%22%3A%22%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f8fafc%22%2C%22theme_color%22%3A%22%236366f1%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22%236366f1%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2270%22%20font-size%3D%2250%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%20font-family%3D%22Arial%22%3ER%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
 
@@ -26,7 +19,6 @@
 
       body {
         background: #f8fafc;
-        overscroll-behavior: none;
       }
 
       .app-header {
@@ -35,7 +27,6 @@
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
       }
 
-      /* Bottom sheets */
       .mobile-bottom-sheet {
         position: fixed;
         bottom: 0;
@@ -85,10 +76,6 @@
         cursor: pointer;
       }
 
-      .fab:active {
-        transform: scale(0.92);
-      }
-
       .mobile-nav {
         position: fixed;
         bottom: 0;
@@ -104,31 +91,6 @@
         z-index: 30;
       }
 
-      .nav-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        color: #94a3b8;
-        font-size: 12px;
-        font-weight: 500;
-        padding: 8px 12px;
-        border-radius: 100px;
-      }
-
-      .nav-item.active {
-        color: #6366f1;
-        background: rgba(99, 102, 241, 0.1);
-      }
-
-      .mobile-card {
-        background: white;
-        border-radius: 20px;
-        padding: 16px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-        border: 1px solid rgba(0, 0, 0, 0.03);
-      }
-
       .main-content {
         padding-bottom: 90px;
         padding-top: env(safe-area-inset-top, 16px);
@@ -140,16 +102,6 @@
         }
       }
 
-      /* Amount colors */
-      .income-amount {
-        color: #10b981;
-      }
-
-      .expense-amount {
-        color: #ef4444;
-      }
-
-      /* Category pills */
       .category-pill {
         display: inline-block;
         padding: 4px 12px;
@@ -207,56 +159,51 @@
 
     <!-- Main Mobile Content -->
     <div class="mobile-only main-content px-4">
-      <!-- Summary Cards -->
-      <div class="grid grid-cols-1 gap-3 mb-4">
-        <!-- Monthly Income Card -->
-        <div
-          class="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-2xl p-5 shadow-lg">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-indigo-100 text-sm">Monthly Income</span>
-            <div class="bg-white/20 rounded-full p-1.5">
-              <i data-lucide="trending-up" class="w-4 h-4 text-white"></i>
-            </div>
+      <!-- Income Card -->
+      <div
+        class="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-2xl p-5 shadow-lg mb-3">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-indigo-100 text-sm">Monthly Income</span>
+          <div class="bg-white/20 rounded-full p-1.5">
+            <i data-lucide="trending-up" class="w-4 h-4 text-white"></i>
           </div>
-          <p class="text-3xl font-bold text-white" id="mobile-monthly-income">
+        </div>
+        <p class="text-3xl font-bold text-white" id="mobile-monthly-income">
+          R0.00
+        </p>
+        <p class="text-xs text-indigo-200 mt-1">Your monthly budget</p>
+      </div>
+
+      <!-- Balance & Expenses -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="bg-emerald-100 rounded-full p-1.5">
+              <i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i>
+            </div>
+            <span class="text-xs text-slate-500">Balance</span>
+          </div>
+          <p
+            class="text-xl font-bold text-slate-900"
+            id="mobile-current-balance">
             R0.00
           </p>
-          <p class="text-xs text-indigo-200 mt-1">Set your monthly budget</p>
+          <p class="text-xs text-slate-400 mt-1">Total money</p>
         </div>
 
-        <!-- Balance & Expenses Grid -->
-        <div class="grid grid-cols-2 gap-3">
-          <div
-            class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-            <div class="flex items-center gap-2 mb-2">
-              <div class="bg-emerald-100 rounded-full p-1.5">
-                <i data-lucide="wallet" class="w-4 h-4 text-emerald-600"></i>
-              </div>
-              <span class="text-xs text-slate-500">Balance</span>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="bg-rose-100 rounded-full p-1.5">
+              <i data-lucide="credit-card" class="w-4 h-4 text-rose-600"></i>
             </div>
-            <p
-              class="text-xl font-bold text-slate-900"
-              id="mobile-current-balance">
-              R0.00
-            </p>
-            <p class="text-xs text-slate-400 mt-1">Available now</p>
+            <span class="text-xs text-slate-500">Expenses</span>
           </div>
-
-          <div
-            class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-            <div class="flex items-center gap-2 mb-2">
-              <div class="bg-rose-100 rounded-full p-1.5">
-                <i data-lucide="credit-card" class="w-4 h-4 text-rose-600"></i>
-              </div>
-              <span class="text-xs text-slate-500">Expenses</span>
-            </div>
-            <p
-              class="text-xl font-bold text-slate-900"
-              id="mobile-total-expenses">
-              R0.00
-            </p>
-            <p class="text-xs text-slate-400 mt-1">This month</p>
-          </div>
+          <p
+            class="text-xl font-bold text-slate-900"
+            id="mobile-total-expenses">
+            R0.00
+          </p>
+          <p class="text-xs text-slate-400 mt-1">This month</p>
         </div>
       </div>
 
@@ -264,13 +211,13 @@
       <div class="flex gap-2 mb-6">
         <button
           onclick="openIncomeSheet()"
-          class="flex-1 bg-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 border border-slate-200 shadow-sm active:bg-slate-50 transition-colors">
+          class="flex-1 bg-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 border border-slate-200 shadow-sm active:bg-slate-50">
           <i data-lucide="piggy-bank" class="w-5 h-5 text-indigo-500"></i>
           <span class="text-sm font-medium">Set Income</span>
         </button>
         <button
           onclick="openAddSheet()"
-          class="flex-1 bg-indigo-600 rounded-xl py-3 px-4 flex items-center justify-center gap-2 text-white shadow-lg shadow-indigo-200 active:bg-indigo-700 transition-colors">
+          class="flex-1 bg-indigo-600 rounded-xl py-3 px-4 flex items-center justify-center gap-2 text-white shadow-lg shadow-indigo-200 active:bg-indigo-700">
           <i data-lucide="plus" class="w-5 h-5"></i>
           <span class="text-sm font-medium">Add</span>
         </button>
@@ -301,7 +248,7 @@
           >
           <span class="text-slate-600"
             >Left:
-            <span class="font-semibold" id="mobile-left-amount"
+            <span class="font-semibold text-indigo-600" id="mobile-left-amount"
               >R0.00</span
             ></span
           >
@@ -338,17 +285,13 @@
         <div class="h-48">
           <canvas id="mobileCategoryChart"></canvas>
         </div>
-        <div class="mt-4 space-y-2" id="category-breakdown">
-          <!-- Category breakdown will be added here -->
-        </div>
+        <div class="mt-4 space-y-2" id="category-breakdown"></div>
       </div>
 
       <!-- Recent Transactions -->
       <div class="mb-6">
         <h3 class="font-medium mb-3 px-1">Recent Transactions</h3>
-        <div class="space-y-2" id="mobile-transactions-list">
-          <!-- Transactions will be added here dynamically -->
-        </div>
+        <div class="space-y-2" id="mobile-transactions-list"></div>
       </div>
     </div>
 
@@ -371,16 +314,14 @@
                 type="number"
                 step="0.01"
                 id="mobile-income-amount"
-                class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
-                placeholder="0.00" />
+                class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                placeholder="0.00"
+                value="20903.73" />
             </div>
-            <p class="text-xs text-slate-500 mt-2">
-              This is your total monthly budget for expenses
-            </p>
           </div>
           <button
             type="submit"
-            class="w-full bg-indigo-600 text-white font-medium py-3 px-4 rounded-xl active:bg-indigo-700 transition-colors">
+            class="w-full bg-indigo-600 text-white font-medium py-3 px-4 rounded-xl active:bg-indigo-700">
             Set Monthly Budget
           </button>
         </form>
@@ -393,18 +334,17 @@
       <div class="px-6 pb-8">
         <h2 class="text-xl font-semibold mb-6">Add Transaction</h2>
         <form id="mobile-transaction-form" class="space-y-4">
-          <!-- Transaction Type Toggle -->
           <div class="bg-slate-100 p-1 rounded-xl flex mb-4">
             <button
               type="button"
-              class="flex-1 py-3 rounded-xl text-sm font-medium transition-all"
+              class="flex-1 py-3 rounded-xl text-sm font-medium bg-white shadow-sm"
               id="expense-toggle"
               onclick="setTransactionType('expense')">
               💳 Expense
             </button>
             <button
               type="button"
-              class="flex-1 py-3 rounded-xl text-sm font-medium transition-all"
+              class="flex-1 py-3 rounded-xl text-sm font-medium"
               id="income-toggle"
               onclick="setTransactionType('income')">
               💰 Income
@@ -473,7 +413,7 @@
 
           <button
             type="submit"
-            class="w-full bg-indigo-600 text-white font-medium py-3 px-4 rounded-xl active:bg-indigo-700 transition-colors">
+            class="w-full bg-indigo-600 text-white font-medium py-3 px-4 rounded-xl active:bg-indigo-700">
             Add Transaction
           </button>
         </form>
@@ -506,10 +446,55 @@
 
       // App state
       let monthlyIncome =
-        parseFloat(localStorage.getItem('monthlyIncome')) || 0;
+        parseFloat(localStorage.getItem('monthlyIncome')) || 20903.73; // Default for testing
       let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 
-      // Transaction type toggle
+      // Add some test transactions if empty
+      if (transactions.length === 0) {
+        transactions = [
+          {
+            id: '1',
+            type: 'expense',
+            amount: 4500,
+            description: 'Rent',
+            category: 'bills',
+            date: new Date().toISOString().split('T')[0],
+          },
+          {
+            id: '2',
+            type: 'expense',
+            amount: 3500,
+            description: 'Groceries',
+            category: 'food',
+            date: new Date().toISOString().split('T')[0],
+          },
+          {
+            id: '3',
+            type: 'expense',
+            amount: 850,
+            description: 'Uber',
+            category: 'transport',
+            date: new Date().toISOString().split('T')[0],
+          },
+          {
+            id: '4',
+            type: 'expense',
+            amount: 1200,
+            description: 'Eating out',
+            category: 'food',
+            date: new Date().toISOString().split('T')[0],
+          },
+          {
+            id: '5',
+            type: 'expense',
+            amount: 2080,
+            description: 'Shopping',
+            category: 'shopping',
+            date: new Date().toISOString().split('T')[0],
+          },
+        ];
+      }
+
       function setTransactionType(type) {
         document.getElementById('transaction-type').value = type;
         const expenseToggle = document.getElementById('expense-toggle');
@@ -524,19 +509,17 @@
         }
       }
 
-      // Format currency
       function formatCurrency(amount) {
         return `R${amount.toFixed(2)}`;
       }
 
-      // Calculate financial stats
       function calculateStats() {
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
         const today = now.toDateString();
 
-        // Monthly totals
+        // Monthly expenses (current month only)
         const monthlyExpenses = transactions
           .filter((t) => {
             const date = new Date(t.date);
@@ -548,7 +531,8 @@
           })
           .reduce((sum, t) => sum + t.amount, 0);
 
-        const monthlyIncome_total = transactions
+        // Additional income for current month
+        const monthlyAdditionalIncome = transactions
           .filter((t) => {
             const date = new Date(t.date);
             return (
@@ -574,38 +558,44 @@
           })
           .reduce((sum, t) => sum + t.amount, 0);
 
-        // Current balance (all time)
-        const totalIncome =
+        // ALL TIME totals (for balance)
+        const allTimeIncome =
           transactions
             .filter((t) => t.type === 'income')
             .reduce((sum, t) => sum + t.amount, 0) + monthlyIncome;
 
-        const totalExpenses = transactions
+        const allTimeExpenses = transactions
           .filter((t) => t.type === 'expense')
           .reduce((sum, t) => sum + t.amount, 0);
 
-        const currentBalance = totalIncome - totalExpenses;
+        const currentBalance = allTimeIncome - allTimeExpenses;
 
-        // Remaining budget for the month
+        // REMAINING BUDGET = Monthly Income - Monthly Expenses (THIS IS THE KEY FIX)
         const remainingBudget = monthlyIncome - monthlyExpenses;
+
+        console.log('=== CALCULATIONS ===');
+        console.log('Monthly Income:', monthlyIncome);
+        console.log('Monthly Expenses:', monthlyExpenses);
+        console.log('Remaining Budget:', remainingBudget);
+        console.log('Additional Income:', monthlyAdditionalIncome);
+        console.log('Current Balance:', currentBalance);
+        console.log('===================');
 
         return {
           monthlyExpenses,
-          monthlyIncome: monthlyIncome,
-          monthlyIncome_total,
+          monthlyIncome,
+          monthlyAdditionalIncome,
           todayExpenses,
           todayIncome,
           currentBalance,
           remainingBudget,
-          totalExpenses,
+          allTimeExpenses,
         };
       }
 
-      // Update mobile UI
       function updateUI() {
         const stats = calculateStats();
 
-        // Update displays
         document.getElementById('mobile-monthly-income').textContent =
           formatCurrency(stats.monthlyIncome);
         document.getElementById('mobile-current-balance').textContent =
@@ -619,7 +609,6 @@
           stats.todayExpenses,
         );
 
-        // Budget progress
         const budgetPercentage =
           stats.monthlyIncome > 0
             ? (stats.monthlyExpenses / stats.monthlyIncome) * 100
@@ -631,20 +620,16 @@
         document.getElementById('mobile-spent-amount').textContent =
           formatCurrency(stats.monthlyExpenses);
         document.getElementById('mobile-left-amount').textContent =
-          formatCurrency(
-            Math.max(stats.monthlyIncome - stats.monthlyExpenses, 0),
-          );
+          formatCurrency(Math.max(stats.remainingBudget, 0));
 
         updateTransactionsList();
         updateCategoryChart();
         updateCategoryBreakdown();
 
-        // Save to localStorage
         localStorage.setItem('transactions', JSON.stringify(transactions));
         localStorage.setItem('monthlyIncome', monthlyIncome.toString());
       }
 
-      // Update transactions list
       function updateTransactionsList() {
         const sortedTransactions = [...transactions]
           .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -657,34 +642,33 @@
             const isToday = date.toDateString() === new Date().toDateString();
 
             return `
-            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex items-center justify-between">
-              <div class="flex items-center gap-3 flex-1">
-                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg">
-                  ${t.type === 'income' ? '💰' : '💳'}
-                </div>
-                <div class="flex-1">
-                  <div class="flex items-center gap-2">
-                    <p class="font-medium text-sm">${t.description}</p>
-                    ${isToday ? '<span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Today</span>' : ''}
-                  </div>
-                  <div class="flex items-center gap-2 mt-1">
-                    <span class="category-pill ${t.category}">${t.category}</span>
-                    <span class="text-xs text-slate-400">${date.toLocaleDateString()}</span>
-                  </div>
-                </div>
+          <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-3 flex-1">
+              <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg">
+                ${t.type === 'income' ? '💰' : '💳'}
               </div>
-              <div class="text-right">
-                <p class="font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}">
-                  ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)}
-                </p>
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <p class="font-medium text-sm">${t.description}</p>
+                  ${isToday ? '<span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Today</span>' : ''}
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="category-pill ${t.category}">${t.category}</span>
+                  <span class="text-xs text-slate-400">${date.toLocaleDateString()}</span>
+                </div>
               </div>
             </div>
-          `;
+            <div class="text-right">
+              <p class="font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}">
+                ${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)}
+              </p>
+            </div>
+          </div>
+        `;
           })
           .join('');
       }
 
-      // Initialize chart
       let mobileChart;
 
       function initMobileChart() {
@@ -712,7 +696,6 @@
                   '#84cc16',
                 ],
                 borderWidth: 0,
-                borderRadius: 4,
               },
             ],
           },
@@ -720,14 +703,11 @@
             responsive: true,
             maintainAspectRatio: false,
             cutout: '65%',
-            plugins: {
-              legend: { display: false },
-            },
+            plugins: { legend: { display: false } },
           },
         });
       }
 
-      // Update chart
       function updateCategoryChart() {
         if (!mobileChart) return;
 
@@ -754,7 +734,6 @@
         mobileChart.update();
       }
 
-      // Update category breakdown
       function updateCategoryBreakdown() {
         const now = new Date();
         const currentMonth = now.getMonth();
@@ -782,28 +761,27 @@
           .map(([category, amount]) => {
             const percentage = ((amount / total) * 100).toFixed(1);
             return `
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class="category-pill ${category}">${category}</span>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span class="text-sm font-medium">${formatCurrency(amount)}</span>
-                  <span class="text-xs text-slate-400 w-12 text-right">${percentage}%</span>
-                </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="category-pill ${category}">${category}</span>
               </div>
-            `;
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-medium">${formatCurrency(amount)}</span>
+                <span class="text-xs text-slate-400 w-12 text-right">${percentage}%</span>
+              </div>
+            </div>
+          `;
           })
           .join('');
       }
 
-      // Bottom sheet controls
       function openIncomeSheet() {
         document.getElementById('income-sheet').classList.add('open');
       }
 
       function openAddSheet() {
         document.getElementById('add-sheet').classList.add('open');
-        setTransactionType('expense'); // Default to expense
+        setTransactionType('expense');
       }
 
       function closeSheets() {
@@ -811,14 +789,12 @@
         document.getElementById('add-sheet').classList.remove('open');
       }
 
-      // Close sheets on background tap
       document.addEventListener('click', (e) => {
         if (e.target.classList.contains('mobile-bottom-sheet')) {
           closeSheets();
         }
       });
 
-      // Form submissions
       document
         .getElementById('mobile-income-form')
         ?.addEventListener('submit', (e) => {
@@ -861,50 +837,34 @@
           ) {
             transactions.push(transaction);
             e.target.reset();
-            setTransactionType('expense'); // Reset to expense
+            setTransactionType('expense');
             updateUI();
             closeSheets();
-
-            // Set today's date again
             document.getElementById('mobile-transaction-date').value =
               new Date().toISOString().split('T')[0];
           }
         });
 
-      // Tab switching
       function switchTab(tab) {
         document.querySelectorAll('.nav-item').forEach((item) => {
           item.classList.remove('active');
         });
         event.currentTarget.classList.add('active');
-        // Here you would implement tab content switching
       }
 
       // Initialize
       initMobileChart();
       updateUI();
 
-      // Set today's date
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('mobile-transaction-date').value = today;
-
-      // Prevent body scroll when sheet is open
-      document.querySelectorAll('.mobile-bottom-sheet').forEach((sheet) => {
-        sheet.addEventListener(
-          'touchmove',
-          (e) => {
-            e.stopPropagation();
-          },
-          { passive: false },
-        );
-      });
 
       // PWA Service Worker
       if ('serviceWorker' in navigator) {
         const swScript = `
-          self.addEventListener('install', (e) => self.skipWaiting());
-          self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
-        `;
+        self.addEventListener('install', (e) => self.skipWaiting());
+        self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
+      `;
         const blob = new Blob([swScript], { type: 'text/javascript' });
         const swUrl = URL.createObjectURL(blob);
         navigator.serviceWorker.register(swUrl);
