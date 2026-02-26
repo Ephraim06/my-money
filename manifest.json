@@ -1,8 +1,8 @@
 {
-  "name": "My Money - Personal Finance",
+  "name": "My Money",
   "short_name": "My Money",
   "description": "Track your personal finances easily",
-  "start_url": "/",
+  "start_url": "/my-money",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#6366f1",
