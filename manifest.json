@@ -2,7 +2,7 @@
   "name": "My Money",
   "short_name": "My Money",
   "description": "Track your personal finances easily",
-  "start_url": "/my-money",
+  "start_url": "https://ephraim06.github.io/my-money",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#6366f1",
