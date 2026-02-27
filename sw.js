@@ -1,9 +1,9 @@
 const CACHE_NAME = 'my-money-v1';
 const urlsToCache = [
-  '/',
-  'index.html',
-  'app.js',
-  'manifest.json',
+  '/my-money/',
+  '/my-money/index.html',
+  '/my-money/app.js',
+  '/my-money/manifest.json'
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://unpkg.com/lucide@latest',
