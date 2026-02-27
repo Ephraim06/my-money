@@ -3,6 +3,7 @@
   "short_name": "My Money",
   "description": "Track your personal finances easily",
   "start_url": "/my-money",
+  "scope": "/my-money/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#6366f1",
