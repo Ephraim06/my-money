@@ -1,6 +1,6 @@
 {
-  "name": "My Money",
-  "short_name": "My Money",
+  "name": "Wiretree TrackNest",
+  "short_name": "TrackNest",
   "description": "Track your personal finances easily",
   "start_url": "/my-money",
   "scope": "/my-money/",
