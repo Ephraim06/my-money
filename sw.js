@@ -3,7 +3,7 @@ const urlsToCache = [
   '/my-money/',
   '/my-money/index.html',
   '/my-money/app.js',
-  '/my-money/manifest.json'
+  '/my-money/manifest.json',
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://unpkg.com/lucide@latest',
